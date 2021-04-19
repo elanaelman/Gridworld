@@ -6,4 +6,3 @@
 (compile-file "simulation-and-function-evaluation.lisp")
 (compile-file "gridworld-world.lisp")
 
-

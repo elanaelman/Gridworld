@@ -1,4 +1,4 @@
-initial loading of gridworld code
+; File for initial loading of gridworld code
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ; Note: Do not change the loading order, as some definitions in earlier
