@@ -10,12 +10,21 @@
 ;; Date: Jan. 2010 by Daphne Liu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def-roadmap '(home grove plaza) '((path1 home 3 grove) (path2 home 2 plaza)))
+;(def-roadmap '(home grove plaza) '((path1 home 3 grove) (path2 home 2 plaza)))
 (def-object 'robot '(is_animate can_talk))
-(def-object 'expert '(is_animate can_talk))
-(def-object 'instrument '(is_inanimate is_playable))
-(def-object 'juice '(is_inanimate is_potable (has_cost 2.0)))
-(def-object 'pizza '(is_inanimate is_edible (has_cost 5.0)))
+;(def-object 'boss '(is_animate can_talk))
+(def-object 'office '(is_inanimate))
+(def-object 'gas '(is_inanimate is_notedible can_finish (has_cost 2.0)))
+(def-object 'pizza '(is_edible can_finish (has_cost 3.0)))
+(def-object 'juice '(is_potable can_finish (has_cost 2.0)))
+(def-object 'sushi '(is_edible can_finish (has_cost 5.0)))
+(def-object 'car '(is_inanimate is_robots has_gaslevel has_speed has_mileage))
+
+(def-roadmap '(home work supermarket gasstation dropoffLoc) 
+	'((path1 home 3 supermarket) (path2 home 5 work) (path3 home 4 dropoffLoc)
+	  (path4 work 2 supermarket) (path5 work 4 gasstation)
+	  (path6 supermarket 2 gasstation) (path7 supermarket 3 dropoffLoc)
+	  (path8 dropoffLoc 4 gasstation)))
 
 ;; Note that we create some "current facts" about
 ;; AG that are really about the situation at plaza;
@@ -57,11 +66,11 @@
     ;that with `knows AG that', and hence the form (knows AG (that (knows another_agent ...))).
    )
 )
-
+;;Zag
 (place-object 'pizza3 'pizza 'home 0 
 	nil ; no associated-things
 	; current facts
-	'((is_edible pizza3) 
+	'((is_edible pizza3) (can_finish pizza3)
 	 )
     nil ; propositional attitudes
 )
@@ -69,25 +78,42 @@
 (place-object 'juice3 'juice 'plaza 0 
 	nil ; no associated-things
 	; current facts
-	'((is_potable juice3) 
+	'((is_potable juice3) (can_finish juice3)
 	 )
     nil ; propositional attitudes
 )
 
-(place-object 'piano2 'instrument 'home 0 
+(place-object 'pizza1 'pizza 'supermarket 0 
 	nil ; no associated-things
-	'((is_playable piano2)
+	; current facts
+	'((is_edible pizza1) (has_cost 3.0) 
 	 )
     nil ; propositional attitudes
 )
 
-(place-object 'guru 'expert 'grove 0 
+(place-object 'juice1 'juice 'supermarket 0 
 	nil ; no associated-things
-    nil ; no current facts
-    ; propositional attitudes
-    '((knows guru (whether (is_potable juice3)))
-     )
+	; current facts
+	'((is_potable juice1) (has_cost 2.0)
+	 )
+    nil ; propositional attitudes
 )
+(place-object 'sushi1 'sushi 'supermarket 0 
+	nil ; no associated-things
+	; current facts
+	'((is_edible sushi1) (has_cost 5.0)
+	 )
+    nil ; propositional attitudes
+)
+
+(place-object 'car1 'car 'home 0 
+	nil ; no associated-things
+	'((is_inanimate car1) (is_robots car1) (has_gaslevel car1 20.0) (has_speed car1 0.0) (has_mileage car1 0.0))
+	 )
+    nil ; propositional attitudes
+)
+
+
 
 ;(setq *occluded-preds* 
 ;    '(is_playable knows is_edible is_potable)
