@@ -12,7 +12,6 @@ def-object 'robot '(is_animate can_talk))
 	  (path6 supermarket 2 gasstation) (path7 supermarket 3 dropoffLoc)
 	  (path8 dropoffLoc 4 gasstation)))
 	  
-;;Zag
 (place-object 'pizza3 'pizza 'home 0 
 	nil ; no associated-things
 	; current facts
@@ -58,3 +57,83 @@ def-object 'robot '(is_animate can_talk))
 	 )
     nil ; propositional attitudes
 )
+
+(setq sleep
+	(make-op
+		:name ’sleep
+		:pars ’(?f ?h)
+		:preconds ’( (is_at AG home)
+			(is_tired_to_degree AG ?t)
+			(>= ?f 0.5)
+			(is_hungry_to_degree AG ?h)
+			(> ?f ?h)
+			(not (there_is_a_fire)) )
+		:effects ’( (is_tired_to_degree AG 0)
+			(not (is_tired_to_degree AG ?f))
+			(is_hungry_to_degree AG (+ ?h 2)))
+		:time-required ’(* 4 ?f)
+		:value ’(* 2 ?f)
+	)
+)
+
+(setq sleep.actual 
+	(make-op.actual 
+		:name 'sleep.actual 
+		:pars '(?f ?h)                                           	   
+    		:startconds '((is_at AG home)
+                  	(is_tired_to_degree AG ?f)
+                  	(>= ?f 2.5)
+                  	(is_hungry_to_degree AG ?h)
+                  	(> ?f ?h) ); more tired than hungry
+    		:stopconds '((there_is_a_fire)
+    			(is_tired_to_degree AG 0.0))
+    		:deletes '((is_tired_to_degree AG ?#1) 
+               		(is_hungry_to_degree AG ?#2) )
+    		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
+            	(is_hungry_to_degree AG (+ ?h (* 0.25 (elapsed_time?)))) ) 
+    )
+)
+
+(setq pick_up	
+)
+(setq pick_up.actual 
+)
+
+(setq put_down
+)
+(setq put_down.actual
+)
+
+(setq push
+	(make-op
+		:name ’push
+		:pars ’(?b ?x ?y ?f ?h)
+		:preconds ’((is_at ?b ?x)
+			(not (is_same ?x ?y))
+		         )
+		:effects ’((is_at ?b ?y)
+			(is_tired_to_degree AG (+ ?f 2))
+			(is_hungry_to_degree AG (+ ?h 1)))
+		:time-required ’(* 2 ?f)
+		:value ’(* 1 ?f)
+	)
+)
+(setq push.actual
+	(make-op
+		:name ’push.actual
+		:pars ’(?b ?x ?y ?f ?h)
+		:startconds ’((is_at ?b ?x)
+			(not (is_same ?x ?y))
+		         )
+		:stopconds ’((is_at ?b ?y)
+			(is_tired_to_degree AG (+ ?f 2))
+			(is_hungry_to_degree AG (+ ?h 1)))
+		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
+            	(is_hungry_to_degree AG (+ ?h (* 0.25 (elapsed_time?)))) ) 
+	)
+	
+)
+
+
+
+
