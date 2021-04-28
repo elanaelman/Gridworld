@@ -63,7 +63,7 @@ def-object 'robot '(is_animate can_talk))
 		:name ’sleep
 		:pars ’(?f ?h)
 		:preconds ’( (is_at AG home)
-			(is_tired_to_degree AG ?t)
+			(is_tired_to_degree AG ?f)
 			(>= ?f 0.5)
 			(is_hungry_to_degree AG ?h)
 			(> ?f ?h)
@@ -94,20 +94,70 @@ def-object 'robot '(is_animate can_talk))
     )
 )
 
-(setq pick_up	
+(setq pick_up
+	(make-op
+		:name ’pick_up
+		:pars ’(?b ?x ?w ?h ?f)
+		:preconds ’( (<= ?w 5)
+			(not (is_holding AG *))
+			(is_tired_to_degree AG ?f)
+                  	(<= ?f 1.5)
+                  	(is_hungry_to_degree AG ?h)
+		         )
+		:effects ’((is_holding AG ?b)
+			(is_tired_to_degree AG (+ ?f 1))
+			(is_hungry_to_degree AG (+ ?h 0.5)))
+		:time-required ’(* 1 ?f)
+		:value ’(- 1 ?f)
+	)
 )
+
 (setq pick_up.actual 
+	(make-op
+		:name ’pick_up.actual
+		:pars ’(?b ?x ?w ?h ?f)
+		:startconds ’( (<= ?w 5)
+			(not (is_holding AG *))
+			(is_tired_to_degree AG ?f)
+                  	(<= ?f 1.5)
+                  	(is_hungry_to_degree AG ?h)
+		         )
+		:stopconds ’((is_holding AG ?b))
+		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
+            	(is_hungry_to_degree AG (+ ?h (* 0.15 (elapsed_time?)))) ) 
+	)
 )
 
 (setq put_down
+	(make-op
+		:name ’put_down
+		:pars ’(?b ?x ?f)
+		:preconds ’((is_holding AG ?b)
+				(can_hold ?x ?b))
+		:effects ’((is_on ?b ?x)
+			(is_tired_to_degree AG (- ?f 1))
+			)
+		:time-required ’(* 1 ?f)
+		:value ’(+ 1 ?f)
+	)
 )
 (setq put_down.actual
+	(make-op
+		:name ’put_down.actual
+		:pars ’(?b ?x ?f)
+		:startconds ’( ((is_holding AG ?b)
+				(can_hold ?x ?b))
+		:stopconds ’( (is_on ?b ?x)
+				(not(can_hold ?x ?b))
+				)
+		:adds '(;(is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
+            	 ) 
 )
 
 (setq push
 	(make-op
 		:name ’push
-		:pars ’(?b ?x ?y ?f ?h)
+		:pars ’(?b ?x ?y ?h ?f)
 		:preconds ’((is_at ?b ?x)
 			(not (is_same ?x ?y))
 		         )
@@ -115,13 +165,14 @@ def-object 'robot '(is_animate can_talk))
 			(is_tired_to_degree AG (+ ?f 2))
 			(is_hungry_to_degree AG (+ ?h 1)))
 		:time-required ’(* 2 ?f)
-		:value ’(* 1 ?f)
+		:value ’(- 1 ?f)
 	)
 )
+
 (setq push.actual
 	(make-op
 		:name ’push.actual
-		:pars ’(?b ?x ?y ?f ?h)
+		:pars ’(?b ?x ?y)
 		:startconds ’((is_at ?b ?x)
 			(not (is_same ?x ?y))
 		         )
