@@ -1,54 +1,201 @@
 ; Our gridworld.
 
-;;; construct the map
-(def-roadmap '(me-home boss-home office) '((path1 me-home 2 office) (path2 boss-home 3 office)))
-;;little triangle loop on the bottom of the map
-(def-roadmap '(gas_station supermarket office) '(loop1 office 2 supermarket 1 gas_station 2 office))
+;;Zag's code
+(def-object 'robot '(is_animate can_talk))
+(def-object 'office '(is_inanimate))
+(def-object 'gas '(is_inanimate is_notedible can_finish (has_cost 2.0)))
+(def-object 'pizza '(is_edible can_finish (has_cost 3.0)))
+(def-object 'juice '(is_potable can_finish (has_cost 2.0)))
+(def-object 'sushi '(is_edible can_finish (has_cost 5.0)))
+(def-object 'car '(is_inanimate is_robots has_gaslevel has_speed has_mileagelevel))
 
-(def-object 'person '(can_walk can_talk can_give can_take can_drive is_animate))
-
-(place-object 'ME 'person 'me-home 0  
-    nil ;no associated things
-	'(
-	  ;self-knowledge
-	  (is_tired_to_degree ME 0)
-	  (is_hungry_to_degree ME 0)
-	  (has_money ME 100)
-	  (has_age ME 25) 
-	  (has_name ME Alex)
-	  (has_job ME employee)
-	  (works_at ME office)
-	  (is_single ME)
-	  ;other knowledge
-	  (has_name Boss Carol) (has_job Boss employer) (works_at Boss office)
+(def-roadmap '(home work supermarket gasstation dropoffLoc) 
+	'((path1 home 3 supermarket) (path2 home 5 work) (path3 home 4 dropoffLoc)
+	  (path4 work 2 supermarket) (path5 work 4 gasstation)
+	  (path6 supermarket 2 gasstation) (path7 supermarket 3 dropoffLoc)
+	  (path8 dropoffLoc 4 gasstation)))
+	  
+(place-object 'pizza3 'pizza 'home 0 
+	nil ; no associated-things
+	; current facts
+	'((is_edible pizza3) (can_finish pizza3)
 	 )
-	 nil ;propositional attitudes?
-	 )
+    nil ; propositional attitudes
+)
 
-(place-object 'Boss 'person 'boss-home 0
-	nil
-	'(
-	  ;self-knowledge
-	  (is_tired_to_degree Boss 0)
-	  (is_hungry_to_degree Boss 0)
-	  (has_money Boss 200)
-	  (has_age Boss 30)
-	  (has_name Boss Carol)
-	  (has_job Boss employer)
-	  (works_at Boss office)
-	  (is_single Boss)
-      ;other knowledge
-	  (has_name ME Alex)
-	  (has_job ME employee)
-	  (works_at ME office)
+(place-object 'juice3 'juice 'plaza 0 
+	nil ; no associated-things
+	; current facts
+	'((is_potable juice3) (can_finish juice3)
+	 )
+    nil ; propositional attitudes
+)
+
+(place-object 'pizza1 'pizza 'supermarket 0 
+	nil ; no associated-things
+	; current facts
+	'((is_edible pizza1) (has_cost 3.0) 
+	 )
+    nil ; propositional attitudes
+)
+
+(place-object 'juice1 'juice 'supermarket 0 
+	nil ; no associated-things
+	; current facts
+	'((is_potable juice1) (has_cost 2.0)
+	 )
+    nil ; propositional attitudes
+)
+(place-object 'sushi1 'sushi 'supermarket 0 
+	nil ; no associated-things
+	; current facts
+	'((is_edible sushi1) (has_cost 5.0)
+	 )
+    nil ; propositional attitudes
+)
+
+(place-object 'car1 'car 'home 0 
+	nil ; no associated-things
+	'((is_inanimate car1) (is_robots car1) (has_speed car1 0.0) (mileage_left car1 250)
+	 )
+    nil ; propositional attitudes
+)	
+
+
+(setq sleep
+	(make-op
+		:name ’sleep
+		:pars ’(?f ?h)
+		:preconds ’( (is_at AG home)
+			(is_tired_to_degree AG ?f)
+			(>= ?f 0.5)
+			(is_hungry_to_degree AG ?h)
+			(> ?f ?h)
+			(not (there_is_a_fire)) )
+		:effects ’( (is_tired_to_degree AG 0)
+			(not (is_tired_to_degree AG ?f))
+			(is_hungry_to_degree AG (+ ?h 2)))
+		:time-required ’(* 4 ?f)
+		:value ’(* 2 ?f)
 	)
-	nil)
+)
 
-(setq *operators* '(eat sleep walk run drive pick_up put_down push 
-						use give buy read smell ask tell))
+(setq sleep.actual 
+	(make-op.actual 
+		:name 'sleep.actual 
+		:pars '(?f ?h)                                           	   
+    		:startconds '((is_at AG home)
+                  	(is_tired_to_degree AG ?f)
+                  	(>= ?f 2.5)
+                  	(is_hungry_to_degree AG ?h)
+                  	(> ?f ?h) ); more tired than hungry
+    		:stopconds '((there_is_a_fire)
+    			(is_tired_to_degree AG 0.0))
+    		:deletes '((is_tired_to_degree AG ?#1) 
+               		(is_hungry_to_degree AG ?#2))
+    		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
+            	(is_hungry_to_degree AG (+ ?h (* 0.25 (elapsed_time?)))) ) 
+    )
+)
 
-(setq *search-beam* (list (cons 1 *operators*)))
+(setq pick_up
+	(make-op
+		:name ’pick_up
+		:pars ’(?b ?x ?w ?h ?f)
+		:preconds ’( (<= ?w 5)
+			(not (is_holding AG *))
+			(is_tired_to_degree AG ?f)
+                  	(<= ?f 1.5)
+                  	(is_hungry_to_degree AG ?h)
+		         )
+		:effects ’((is_holding AG ?b)
+			(is_tired_to_degree AG (+ ?f 1))
+			(is_hungry_to_degree AG (+ ?h 0.5)))
+		:time-required ’(* 1 ?f)
+		:value ’(- 1 ?f)
+	)
+)
 
+(setq pick_up.actual 
+	(make-op
+		:name ’pick_up.actual
+		:pars ’(?b ?x ?w ?h ?f)
+		:startconds ’( (<= ?w 5)
+			(not (is_holding AG *))
+			(is_tired_to_degree AG ?f)
+                  	(<= ?f 1.5)
+                  	(is_hungry_to_degree AG ?h)
+		         )
+		:stopconds ’((is_holding_something AG))
+		:deletes '((is_tired_to_degree AG ?#1) 
+               		(is_hungry_to_degree AG ?#2))
+		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
+            	(is_hungry_to_degree AG (+ ?h (* 0.15 (elapsed_time?)))) 
+		(is_holding AG ?b) ) 
+	)
+)
+
+(setq put_down
+	(make-op
+		:name ’put_down
+		:pars ’(?b ?x ?f)
+		:preconds ’((is_holding AG ?b)
+				(can_hold ?x ?b))
+		:effects ’((is_on ?b ?x)
+			(is_tired_to_degree AG (- ?f 1))
+			)
+		:time-required ’(* 1 ?f)
+		:value ’(+ 1 ?f)
+	)
+)
+(setq put_down.actual
+	(make-op
+		:name ’put_down.actual
+		:pars ’(?b ?x ?f)
+		:startconds ’( ((is_holding AG ?b)
+				(can_hold ?x ?b))
+		:stopconds ’( (not(can_hold ?x ?b))
+				)
+		:deletes '((is_tired_to_degree AG ?#1) )
+		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))) (is_on ?b ?x))
+            	 ) 
+)
+
+(setq push
+	(make-op
+		:name ’push
+		:pars ’(?b ?x ?y ?h ?f)
+		:preconds ’((is_at ?b ?x)
+			(not (is_same ?x ?y))
+		         )
+		:effects ’((is_at ?b ?y)
+			(is_tired_to_degree AG (+ ?f 2))
+			(is_hungry_to_degree AG (+ ?h 1)))
+		:time-required ’(* 2 ?f)
+		:value ’(- 1 ?f)
+	)
+)
+
+(setq push.actual
+	(make-op
+		:name ’push.actual
+		:pars ’(?b ?x ?y)
+		:startconds ’((is_at ?b ?x)
+			(not (is_same ?x ?y))
+		         )
+		:stopconds ’((is_tired_to_degree AG (> ?f 2))
+			(is_hungry_to_degree AG (> ?h 2)))
+		:deletes '((is_tired_to_degree AG ?#1) 
+               		(is_hungry_to_degree AG ?#2))
+		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
+            	(is_hungry_to_degree AG (+ ?h (* 0.25 (elapsed_time?)))) (is_at ?b ?x)) 
+	)
+	
+)
+
+;;----------------------------------------
+
+;;George's code
 ;;model version of eat
 (setq eat 
 	(make-op :name 'eat :pars '(?h ?x ?y) ; level of hunger ?h
@@ -217,8 +364,8 @@
 )
 
 ;;actual drive
-(setq walk.actual 
-	(make-op.actual :name 'walk.actual :pars '(?x ?y ?z ?f ?c ?m)
+(setq drive.actual 
+	(make-op.actual :name 'drive.actual :pars '(?x ?y ?z ?f ?c ?m)
 	:startconds '((is_at AG ?x)        
 				  (is_on ?x ?z)        
 				  (is_on ?y ?z) (point y)
@@ -261,3 +408,142 @@
 (def-object 'water '(is_potable (has_cost 1)))
 
 (place-object 'gridworld_supermarket 'supermarket 'supermarket '(chicken potato burger water) nil nil)
+
+
+;;----------------------------
+;;Elana's Code
+(def-roadmap '(me-home boss-home office) '((path1 me-home 2 office) (path2 boss-home 3 office)))
+
+
+;objects:
+
+(def-object 'person '(can_walk can_talk can_give can_take is_animate))
+
+(place-object 'ME 'person 'me-home 0  
+    nil ;no associated things
+	'(
+	  ;self-knowledge
+	  (is_tired_to_degree ME 0)
+	  (is_hungry_to_degree ME 0)
+	  (has_money ME 100)
+	  (has_age ME 25) 
+	  (has_name ME Alex)
+	  (has_job ME employee)
+	  (works_at ME office)
+	  (is_single ME)
+	  ;other knowledge
+	  (has_name Boss Carol) (has_job Boss employer) (works_at Boss office)
+	 )
+	 nil ;propositional attitudes?
+	 )
+
+(place-object 'Boss 'person 'boss-home 0
+	nil
+	'(
+	  ;self-knowledge
+	  (is_tired_to_degree Boss 0)
+	  (is_hungry_to_degree Boss 0)
+	  (has_money Boss 200)
+	  (has_age Boss 30)
+	  (has_name Boss Carol)
+	  (has_job Boss employer)
+	  (works_at Boss office)
+	  (is_single Boss)
+      ;other knowledge
+	  (has_name ME Alex)
+	  (has_job ME employee)
+	  (works_at ME office)
+	)
+	nil)
+
+
+;actions:
+
+(setq buy
+	  (make-op
+		:name 'buy
+		:pars '(?item ?store ?cost)
+		:preconds '((is_at AG ?store) 
+					(sells ?store ?item ?cost) ;need sells? check property?
+					(has_money AG ?cost))
+		:effects '((has_money AG (- (money? AG) ?cost) (owns AG ?item))) ;need owns, money?
+		:time-required '1
+		:value '0 ;value of item? idk
+	  )
+)
+
+(setq buy.actual
+	  (make-op.actual
+		:name 'buy.actual
+		:pars '(?item ?store ?cost)
+		:startconds '((is_at AG ?store) 
+					  (sells ?store ?item ?cost) ;need sells? check property?
+					  (has_money AG ?cost))
+		:stopconds nil
+		:deletes nil
+		:adds '((has_money AG (- (money? AG) ?cost)) (owns AG ?item))
+
+		;elapsed time?
+	  )
+)
+
+(setq smell 
+	  (make-op 
+		:name 'sleep
+		:pars '(?item)
+		:preconds '((owns AG ?item) (is_food ?item))
+		:effects '((knows AG (whether (is_expired ?item))))
+		:time-required '1
+		:value '(if (is_expired ?item) '1 '-1)
+	  )
+)
+
+(setq smell.actual
+	  (make-op.actual
+		:name 'smell.actual
+		:pars '(?item)
+		:startconds '((owns AG ?item) (is_food ?item))
+		:stopconds nil
+		:deletes nil
+		:adds '((knows AG (whether (is_expired ?item))))
+	  )
+)
+
+(setq read
+	  (make-op
+		:name 'read
+		:pars '(?item ?location)
+		:preconds '((is_at AG ?location) (is_at ?item ?location))
+		:effects '(knows AG (message_in ?item))
+		:time-required '(* 0.5 (length_of (message_in ?item)))
+		:value '0
+	  )
+)
+
+(setq read.actual
+	  (make-op.actual
+		:name 'read.actual
+		:pars '(?item ?location)
+		:startconds '((is_at AG ?location) (is_at ?item ?location))
+		:stopconds '((there_is_a_fire))
+		:deletes nil
+		:adds '(knows AG (message_in ?item))
+	  )
+)
+
+(setq say
+	  (make-op
+		:name 'say
+		:pars '(?message ?location)
+		:preconds (is_at AG ?location)
+		:effects '((said AG ?message ?location (current_time))) ;time?
+		:time-required '(*0.5 (length_of ?message))
+		:value '0
+	  )
+)
+
+;setup:
+
+(setq *operators* '(buy read smell say))
+
+(setq *search-beam* (list (cons 1 *operators*)))
