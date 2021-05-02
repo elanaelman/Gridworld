@@ -61,7 +61,7 @@
     nil ; propositional attitudes
 )	
 
-
+;;Model for sleep
 (setq sleep
 	(make-op
 		:name ’sleep
@@ -98,17 +98,18 @@
     )
 )
 
+;;Model for Pick Up
 (setq pick_up
 	(make-op
 		:name ’pick_up
 		:pars ’(?b ?x ?w ?h ?f)
 		:preconds ’( (<= ?w 5)
-			(not (is_holding AG *))
+			(not (is_holding_something AG))
 			(is_tired_to_degree AG ?f)
                   	(<= ?f 1.5)
                   	(is_hungry_to_degree AG ?h)
 		         )
-		:effects ’((is_holding AG ?b)
+		:effects ’((is_holding AG ?b) (is_holding_something AG)
 			(is_tired_to_degree AG (+ ?f 1))
 			(is_hungry_to_degree AG (+ ?h 0.5)))
 		:time-required ’(* 1 ?f)
@@ -131,10 +132,11 @@
                		(is_hungry_to_degree AG ?#2))
 		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
             	(is_hungry_to_degree AG (+ ?h (* 0.15 (elapsed_time?)))) 
-		(is_holding AG ?b) ) 
+		(is_holding AG ?b) (is_holding_something AG)) 
 	)
 )
 
+;;Model for Put down
 (setq put_down
 	(make-op
 		:name ’put_down
@@ -157,10 +159,11 @@
 		:stopconds ’( (not(can_hold ?x ?b))
 				)
 		:deletes '((is_tired_to_degree AG ?#1) )
-		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))) (is_on ?b ?x))
+		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))) (is_on ?b ?x) (not (is_holding AG ?b)))
             	 ) 
 )
-
+	 
+;;Model for Push
 (setq push
 	(make-op
 		:name ’push
