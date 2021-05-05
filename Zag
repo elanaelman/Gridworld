@@ -1,16 +1,34 @@
-def-object 'robot '(is_animate can_talk))
+;;Zag's code
+(def-object 'robot '(is_animate can_talk))
 (def-object 'office '(is_inanimate))
 (def-object 'gas '(is_inanimate is_notedible can_finish (has_cost 2.0)))
 (def-object 'pizza '(is_edible can_finish (has_cost 3.0)))
 (def-object 'juice '(is_potable can_finish (has_cost 2.0)))
 (def-object 'sushi '(is_edible can_finish (has_cost 5.0)))
 (def-object 'car '(is_inanimate is_robots has_gaslevel has_speed has_mileagelevel))
+(def-object 'person '(can_talk can_walk can_give can_take is_animate))
 
 (def-roadmap '(home work supermarket gasstation dropoffLoc) 
 	'((path1 home 3 supermarket) (path2 home 5 work) (path3 home 4 dropoffLoc)
 	  (path4 work 2 supermarket) (path5 work 4 gasstation)
 	  (path6 supermarket 2 gasstation) (path7 supermarket 3 dropoffLoc)
-	  (path8 dropoffLoc 4 gasstation)))
+	  (path8 dropoffLoc 4 gasstation))
+)
+(place-object 'AG 'person 'home 0
+	nil
+	'(
+	(is_tired_to_degree AG 0)
+	(is_hungry_to_degree AG 0)
+	(has_money AG 100)
+	(has_age AG 25)
+	(has_name AG Alex)
+	(has_job AG employee)
+	(works_at AG office)
+	(is_single AG)
+	(has_name Boss Carol) (has_job Boss employer) (works_at Boss office)
+	)
+	nil
+)
 	  
 (place-object 'pizza3 'pizza 'home 0 
 	nil ; no associated-things
@@ -53,26 +71,27 @@ def-object 'robot '(is_animate can_talk))
 
 (place-object 'car1 'car 'home 0 
 	nil ; no associated-things
-	'((is_inanimate car1) (is_robots car1) (has_gaslevel car1 20.0) (has_speed car1 0.0) (has_mileage car1 0.0))
+	'((is_inanimate car1) (is_robots car1) (has_speed car1 0.0) (mileage_left car1 250)
 	 )
     nil ; propositional attitudes
-)
+)	
 
+;;Model for sleep
 (setq sleep
 	(make-op
-		:name ’sleep
-		:pars ’(?f ?h)
-		:preconds ’( (is_at AG home)
+		:name 'sleep
+		:pars '(?f ?h)
+		:preconds '( (is_at AG home)
 			(is_tired_to_degree AG ?f)
 			(>= ?f 0.5)
 			(is_hungry_to_degree AG ?h)
 			(> ?f ?h)
 			(not (there_is_a_fire)) )
-		:effects ’( (is_tired_to_degree AG 0)
+		:effects '( (is_tired_to_degree AG 0)
 			(not (is_tired_to_degree AG ?f))
 			(is_hungry_to_degree AG (+ ?h 2)))
-		:time-required ’(* 4 ?f)
-		:value ’(* 2 ?f)
+		:time-required '(* 4 ?f)
+		:value '(* 2 ?f)
 	)
 )
 
@@ -94,92 +113,94 @@ def-object 'robot '(is_animate can_talk))
     )
 )
 
+;;Model for Pick Up
 (setq pick_up
 	(make-op
-		:name ’pick_up
-		:pars ’(?b ?x ?w ?h ?f)
-		:preconds ’( (<= ?w 5)
-			(not (is_holding AG *))
+		:name 'pick_up
+		:pars '(?b ?x ?w ?h ?f)
+		:preconds '( (<= ?w 5)
+			(not (is_holding_something AG))
 			(is_tired_to_degree AG ?f)
                   	(<= ?f 1.5)
                   	(is_hungry_to_degree AG ?h)
 		         )
-		:effects ’((is_holding AG ?b)
+		:effects '((is_holding AG ?b) (is_holding_something AG)
 			(is_tired_to_degree AG (+ ?f 1))
 			(is_hungry_to_degree AG (+ ?h 0.5)))
-		:time-required ’(* 1 ?f)
-		:value ’(- 1 ?f)
+		:time-required '(* 1 ?f)
+		:value '(- 1 ?f)
 	)
 )
 
 (setq pick_up.actual 
-	(make-op
-		:name ’pick_up.actual
-		:pars ’(?b ?x ?w ?h ?f)
-		:startconds ’( (<= ?w 5)
+	(make-op.actual
+		:name 'pick_up.actual
+		:pars '(?b ?x ?w ?h ?f)
+		:startconds '( (<= ?w 5)
 			(not (is_holding AG *))
 			(is_tired_to_degree AG ?f)
                   	(<= ?f 1.5)
                   	(is_hungry_to_degree AG ?h)
 		         )
-		:stopconds ’((is_holding_something AG))
+		:stopconds '((is_holding_something AG))
 		:deletes '((is_tired_to_degree AG ?#1) 
                		(is_hungry_to_degree AG ?#2))
 		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
             	(is_hungry_to_degree AG (+ ?h (* 0.15 (elapsed_time?)))) 
-		(is_holding AG ?b) ) 
+		(is_holding AG ?b) (is_holding_something AG)) 
 	)
 )
 
+;;Model for Put down
 (setq put_down
 	(make-op
-		:name ’put_down
-		:pars ’(?b ?x ?f)
-		:preconds ’((is_holding AG ?b)
+		:name 'put_down
+		:pars '(?b ?x ?f)
+		:preconds '((is_holding AG ?b)
 				(can_hold ?x ?b))
-		:effects ’((is_on ?b ?x)
+		:effects '((is_on ?b ?x)
 			(is_tired_to_degree AG (- ?f 1))
 			)
-		:time-required ’(* 1 ?f)
-		:value ’(+ 1 ?f)
+		:time-required '(* 1 ?f)
+		:value '(+ 1 ?f)
 	)
 )
 (setq put_down.actual
-	(make-op
-		:name ’put_down.actual
-		:pars ’(?b ?x ?f)
-		:startconds ’( ((is_holding AG ?b)
+	(make-op.actual
+		:name 'put_down.actual
+		:pars '(?b ?x ?f)
+		:startconds '((is_holding AG ?b)
 				(can_hold ?x ?b))
-		:stopconds ’( (not(can_hold ?x ?b))
-				)
+		:stopconds '((not(can_hold ?x ?b)))
 		:deletes '((is_tired_to_degree AG ?#1) )
-		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))) (is_on ?b ?x))
-            	 ) 
+		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?)))) (is_on ?b ?x) (not (is_holding AG ?b)))
+         ) 
 )
-
+	 
+;;Model for Push
 (setq push
 	(make-op
-		:name ’push
-		:pars ’(?b ?x ?y ?h ?f)
-		:preconds ’((is_at ?b ?x)
+		:name 'push
+		:pars '(?b ?x ?y ?h ?f)
+		:preconds '((is_at ?b ?x)
 			(not (is_same ?x ?y))
 		         )
-		:effects ’((is_at ?b ?y)
+		:effects '((is_at ?b ?y)
 			(is_tired_to_degree AG (+ ?f 2))
 			(is_hungry_to_degree AG (+ ?h 1)))
-		:time-required ’(* 2 ?f)
-		:value ’(- 1 ?f)
+		:time-required '(* 2 ?f)
+		:value '(- 1 ?f)
 	)
 )
 
 (setq push.actual
-	(make-op
-		:name ’push.actual
-		:pars ’(?b ?x ?y)
-		:startconds ’((is_at ?b ?x)
+	(make-op.actual
+		:name 'push.actual
+		:pars '(?b ?x ?y)
+		:startconds '((is_at ?b ?x)
 			(not (is_same ?x ?y))
 		         )
-		:stopconds ’((is_tired_to_degree AG (> ?f 2))
+		:stopconds '((is_tired_to_degree AG (> ?f 2))
 			(is_hungry_to_degree AG (> ?h 2)))
 		:deletes '((is_tired_to_degree AG ?#1) 
                		(is_hungry_to_degree AG ?#2))
@@ -188,7 +209,3 @@ def-object 'robot '(is_animate can_talk))
 	)
 	
 )
-
-
-
-
