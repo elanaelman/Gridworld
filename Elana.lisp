@@ -1,11 +1,20 @@
 ; Elana's gridworld functions.
 
+;temporary map:
+(def-roadmap '(home office) '((p1 home 1 office))) 
+
+;temporary function, included in skeleton:
+
+(defun answer_to_whq? (wff)
+	(check-whq-answer-in-kb 'NIL wff (state-node-wff-htable *curr-state-node*))
+)
+
 ;objects:
 
 (def-object 'person '(can_talk is_animate))
 (def-object 'note '(is_readable))
 
-(place-object 'AG 'person 'me-home 0  
+(place-object 'AG 'person 'home 0  
     nil ;no associated things
 	'(
 	  ;self-knowledge
@@ -47,10 +56,9 @@
 
 ;actions:
 
-;TODO: test. Assuming format from lisp 2 project, might need an extra car.
-(defun has_money? (ag)
-	(let ((ans (answer_to_whq? (has_money ag ?x))))
-		(cond (equal (car ans) 'not) -1 (caddr ans))))
+(defun has_money? (?ag)
+	(let ((ans (answer_to_whq? (list 'has_money ?ag '?x))))
+		(if (equal (car ans) 'not) -1 (caddar ans))))
 
 (setq buy
 	  (make-op
@@ -62,7 +70,7 @@
 					(>= (has_money? AG) ?cost))
 		:effects '((has_money AG (- (has_money? AG) ?cost) (has AG ?item)))
 		:time-required 1
-		:value ?cost
+		:value '?cost
 	  )
 )
 
@@ -101,17 +109,16 @@
 	  )
 )
 
-;TODO: test, again assuming notation from lisp2 assignment.
-;Also, might need to add case for no message found.
+;might need to add case for no message found.
 (defun message_of? (n)
-	(caddr (answer_to_whq? (has_message_that n ?message))))
+	(caddar (answer_to_whq? (list 'has_message_that n '?message))))
 
 (setq read
 	  (make-op
 		:name 'read
 		:pars '(?item ?location)
 		:preconds '((is_at AG ?location) (is_at ?item ?location) (is_readable ?item))
-		:effects '(knows AG (message_of? ?item))	;TODO: message_of?
+		:effects '(knows AG (message_of? ?item))
 		:time-required 3
 		:value 0
 	  )
@@ -133,27 +140,29 @@
 (place-object 'note1 'note 'home 0 nil '((has_message_that note1 (wants Alice apple1))) nil)
 
 
-(setq say
-	  (make-op
-		:name 'say
-		:pars '(?message ?location)
-		:preconds '((is_at AG ?location))
-		:effects '((said AG ?message ?location (current_time?)))
-		:time-required 2
-		:value 0
-	  )
-)
+; say operators are currently broken, and also not useful without a second agent
 
-(setq say.actual
-		(make-op
-		  :name 'say.actual
-		  :pars '(?message ?location)
-		  :startconds '((is_at AG ?location))
-		  :stopconds '((there_is_a_fire))
-		  :deletes nil
-		  :adds '((said AG ?message ?location (current_time?)))
-		)
-)
+;(setq say
+;	  (make-op
+;		:name 'say
+;		:pars '(?message ?location)
+;		:preconds '((is_at AG ?location))
+;		:effects '((said AG ?message ?location (current_time?)))
+;		:time-required 2
+;		:value 0
+;	  )
+;)
+
+;(setq say.actual
+;		(make-op.actual
+;		  :name 'say.actual
+;		  :pars '(?message ?location)
+;		  :startconds '((is_at AG ?location))
+;		  :stopconds '((there_is_a_fire))
+;		  :deletes nil
+;		  :adds '((said AG ?message ?location (current_time?)))
+;		)
+;)
 
 
 
