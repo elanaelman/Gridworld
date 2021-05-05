@@ -154,12 +154,12 @@
 	(make-op.actual
 		:name ’put_down.actual
 		:pars ’(?b ?x ?f)
-		:startconds ’( ((is_holding AG ?b)
+		:startconds ’((is_holding AG ?b)
 				(can_hold ?x ?b))
 		:stopconds ’( (not(can_hold ?x ?b))
 				)
 		:deletes ’((is_tired_to_degree AG ?#1) )
-		:adds ’((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))) (is_on ?b ?x) (not (is_holding AG ?b)))
+		:adds ’((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?)))) (is_on ?b ?x) (not (is_holding AG ?b)))
             	 ) 
 )
 	 
