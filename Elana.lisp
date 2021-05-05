@@ -169,7 +169,7 @@
 
 ;setup:
 
-(setq *operators* '(buy read smell say))
+(setq *operators* '(buy read smell))
 
 (setq *search-beam* (list (cons 1 *operators*)))
 
