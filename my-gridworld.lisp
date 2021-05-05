@@ -118,7 +118,7 @@
 )
 
 (setq pick_up.actual 
-	(make-op
+	(make-op.actual
 		:name ’pick_up.actual
 		:pars ’(?b ?x ?w ?h ?f)
 		:startconds ’( (<= ?w 5)
@@ -151,7 +151,7 @@
 	)
 )
 (setq put_down.actual
-	(make-op
+	(make-op.actual
 		:name ’put_down.actual
 		:pars ’(?b ?x ?f)
 		:startconds ’( ((is_holding AG ?b)
@@ -180,7 +180,7 @@
 )
 
 (setq push.actual
-	(make-op
+	(make-op.actual
 		:name ’push.actual
 		:pars ’(?b ?x ?y)
 		:startconds ’((is_at ?b ?x)
