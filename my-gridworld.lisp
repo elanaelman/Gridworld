@@ -82,18 +82,18 @@
 
 (setq sleep.actual 
 	(make-op.actual 
-		:name 'sleep.actual 
-		:pars '(?f ?h)                                           	   
+		:name ’sleep.actual 
+		:pars ’(?f ?h)                                           	   
     		:startconds '((is_at AG home)
                   	(is_tired_to_degree AG ?f)
                   	(>= ?f 2.5)
                   	(is_hungry_to_degree AG ?h)
                   	(> ?f ?h) ); more tired than hungry
-    		:stopconds '((there_is_a_fire)
+    		:stopconds ’((there_is_a_fire)
     			(is_tired_to_degree AG 0.0))
     		:deletes '((is_tired_to_degree AG ?#1) 
                		(is_hungry_to_degree AG ?#2))
-    		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
+    		:adds ’((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
             	(is_hungry_to_degree AG (+ ?h (* 0.25 (elapsed_time?)))) ) 
     )
 )
@@ -128,9 +128,9 @@
                   	(is_hungry_to_degree AG ?h)
 		         )
 		:stopconds ’((is_holding_something AG))
-		:deletes '((is_tired_to_degree AG ?#1) 
+		:deletes ’((is_tired_to_degree AG ?#1) 
                		(is_hungry_to_degree AG ?#2))
-		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
+		:adds ’((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
             	(is_hungry_to_degree AG (+ ?h (* 0.15 (elapsed_time?)))) 
 		(is_holding AG ?b) (is_holding_something AG)) 
 	)
@@ -158,8 +158,8 @@
 				(can_hold ?x ?b))
 		:stopconds ’( (not(can_hold ?x ?b))
 				)
-		:deletes '((is_tired_to_degree AG ?#1) )
-		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))) (is_on ?b ?x) (not (is_holding AG ?b)))
+		:deletes ’((is_tired_to_degree AG ?#1) )
+		:adds ’((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))) (is_on ?b ?x) (not (is_holding AG ?b)))
             	 ) 
 )
 	 
@@ -188,9 +188,9 @@
 		         )
 		:stopconds ’((is_tired_to_degree AG (> ?f 2))
 			(is_hungry_to_degree AG (> ?h 2)))
-		:deletes '((is_tired_to_degree AG ?#1) 
+		:deletes ’((is_tired_to_degree AG ?#1) 
                		(is_hungry_to_degree AG ?#2))
-		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
+		:adds ’((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
             	(is_hungry_to_degree AG (+ ?h (* 0.25 (elapsed_time?)))) (is_at ?b ?x)) 
 	)
 	
