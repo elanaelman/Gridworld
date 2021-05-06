@@ -11,7 +11,7 @@
 
 ;objects:
 
-(def-object 'person '(can_talk is_animate))
+;(def-object 'person '(can_talk is_animate))
 (def-object 'note '(is_readable))
 
 (place-object 'AG 'person 'home 0  
@@ -26,7 +26,14 @@
 	  (has_job AG employee)
 	  (works_at AG office)
 	  (is_single AG)
+	  (is_at AG home)
 	  ;other knowledge
+	  (not(there_is_a_fire))
+	  (not(is_holding_something AG))
+	  (not(is_holding AG *))
+	  
+	  
+	  
 
 	  ;depends on Boss object:
 	  ;(has_name Boss Carol) (has_job Boss employer) (works_at Boss office)
@@ -91,7 +98,7 @@
 	  (make-op 
 		:name 'smell
 		:pars '(?item)
-		:preconds '((has AG ?item) (is_food ?item))
+		:preconds '((has AG ?item) (is_edible ?item))
 		:effects '((knows AG (whether (is_expired ?item)))) ;TODO: check this
 		:time-required '1
 		:value '(if (expired? ?item) 0.5 -0.5) ;TODO: expired?
@@ -102,7 +109,7 @@
 	  (make-op.actual
 		:name 'smell.actual
 		:pars '(?item)
-		:startconds '((has AG ?item) (is_food ?item))
+		:startconds '((has AG ?item) (is_edible ?item))
 		:stopconds nil
 		:deletes nil
 		:adds '((knows AG (whether (is_expired ?item))))
