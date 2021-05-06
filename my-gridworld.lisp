@@ -8,12 +8,41 @@
 (def-object 'juice '(is_potable can_finish (has_cost 2.0)))
 (def-object 'sushi '(is_edible can_finish (has_cost 5.0)))
 (def-object 'car '(is_inanimate is_robots has_gaslevel has_speed has_mileagelevel))
+(def-object 'person '(can_talk can_walk can_give can_take is_animate))
 
 (def-roadmap '(home work supermarket gasstation dropoffLoc) 
 	'((path1 home 3 supermarket) (path2 home 5 work) (path3 home 4 dropoffLoc)
 	  (path4 work 2 supermarket) (path5 work 4 gasstation)
 	  (path6 supermarket 2 gasstation) (path7 supermarket 3 dropoffLoc)
-	  (path8 dropoffLoc 4 gasstation)))
+	  (path8 dropoffLoc 4 gasstation))
+)
+
+(place-object 'AG 'person 'home 0
+	nil
+	'(
+	(is_tired_to_degree AG 0)
+	(is_hungry_to_degree AG 0)
+	(has_money AG 100)
+	(has_age AG 25)
+	(has_name AG Alex)
+	(has_job AG employee)
+	(works_at AG office)
+	(is_single AG)
+	  (is_at AG home)
+	  ;other knowledge
+	  (not(there_is_a_fire))
+	  (not(is_holding_something AG))
+	  (not(is_holding AG *))
+	  (not (there_is_a_flood))
+	  (is_thirsty_to degree AG 0)
+	  (has_car AG car1)
+	  (has_gaslevel AG car1 100.0)
+	  (has_speed AG car1 0)
+	  (has_mileagelevel AG car1 250)
+	;(has_name Boss Carol) (has_job Boss employer) (works_at Boss office)
+	)
+	nil
+)
 	  
 (place-object 'pizza3 'pizza 'home 0 
 	nil ; no associated-things
@@ -56,27 +85,27 @@
 
 (place-object 'car1 'car 'home 0 
 	nil ; no associated-things
-	'((is_inanimate car1) (is_robots car1) (has_speed car1 0.0) (mileage_left car1 250)
+	'((is_inanimate car1) (is_robots car1) (has_gaslevel car1 100.0) (has_speed car1 0.0) (has_mileagelevel car1 250)
 	 )
     nil ; propositional attitudes
 )	
 
-
+;;Model for sleep
 (setq sleep
 	(make-op
-		:name ’sleep
-		:pars ’(?f ?h)
-		:preconds ’( (is_at AG home)
+		:name 'sleep
+		:pars '(?f ?h)
+		:preconds '( (is_at AG home)
 			(is_tired_to_degree AG ?f)
 			(>= ?f 0.5)
 			(is_hungry_to_degree AG ?h)
 			(> ?f ?h)
 			(not (there_is_a_fire)) )
-		:effects ’( (is_tired_to_degree AG 0)
+		:effects '( (is_tired_to_degree AG 0)
 			(not (is_tired_to_degree AG ?f))
 			(is_hungry_to_degree AG (+ ?h 2)))
-		:time-required ’(* 4 ?f)
-		:value ’(* 2 ?f)
+		:time-required '(* 4 ?f)
+		:value '(* 2 ?f)
 	)
 )
 
@@ -98,92 +127,94 @@
     )
 )
 
+;;Model for Pick Up
 (setq pick_up
 	(make-op
-		:name ’pick_up
-		:pars ’(?b ?x ?w ?h ?f)
-		:preconds ’( (<= ?w 5)
-			(not (is_holding AG *))
+		:name 'pick_up
+		:pars '(?b ?x ?w ?h ?f)
+		:preconds '( (<= ?w 5)
+			(not (is_holding_something AG))
 			(is_tired_to_degree AG ?f)
                   	(<= ?f 1.5)
                   	(is_hungry_to_degree AG ?h)
 		         )
-		:effects ’((is_holding AG ?b)
+		:effects '((is_holding AG ?b) (is_holding_something AG)
 			(is_tired_to_degree AG (+ ?f 1))
 			(is_hungry_to_degree AG (+ ?h 0.5)))
-		:time-required ’(* 1 ?f)
-		:value ’(- 1 ?f)
+		:time-required '(* 1 ?f)
+		:value '(- 1 ?f)
 	)
 )
 
 (setq pick_up.actual 
-	(make-op
-		:name ’pick_up.actual
-		:pars ’(?b ?x ?w ?h ?f)
-		:startconds ’( (<= ?w 5)
-			(not (is_holding AG *))
+	(make-op.actual
+		:name 'pick_up.actual
+		:pars '(?b ?x ?w ?h ?f)
+		:startconds '( (<= ?w 5)
+			(not (is_holding_something AG))
 			(is_tired_to_degree AG ?f)
                   	(<= ?f 1.5)
                   	(is_hungry_to_degree AG ?h)
 		         )
-		:stopconds ’((is_holding_something AG))
+		:stopconds '((is_holding_something AG))
 		:deletes '((is_tired_to_degree AG ?#1) 
                		(is_hungry_to_degree AG ?#2))
 		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
             	(is_hungry_to_degree AG (+ ?h (* 0.15 (elapsed_time?)))) 
-		(is_holding AG ?b) ) 
+		(is_holding AG ?b) (is_holding_something AG)) 
 	)
 )
 
+;;Model for Put down
 (setq put_down
 	(make-op
-		:name ’put_down
-		:pars ’(?b ?x ?f)
-		:preconds ’((is_holding AG ?b)
+		:name 'put_down
+		:pars '(?b ?x ?f)
+		:preconds '((is_holding AG ?b)
 				(can_hold ?x ?b))
-		:effects ’((is_on ?b ?x)
+		:effects '((is_on ?b ?x)
 			(is_tired_to_degree AG (- ?f 1))
 			)
-		:time-required ’(* 1 ?f)
-		:value ’(+ 1 ?f)
+		:time-required '(* 1 ?f)
+		:value '(+ 1 ?f)
 	)
 )
 (setq put_down.actual
-	(make-op
-		:name ’put_down.actual
-		:pars ’(?b ?x ?f)
-		:startconds ’( ((is_holding AG ?b)
+	(make-op.actual
+		:name 'put_down.actual
+		:pars '(?b ?x ?f)
+		:startconds '((is_holding AG ?b)
 				(can_hold ?x ?b))
-		:stopconds ’( (not(can_hold ?x ?b))
-				)
+		:stopconds '((not(can_hold ?x ?b)))
 		:deletes '((is_tired_to_degree AG ?#1) )
-		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))) (is_on ?b ?x))
-            	 ) 
+		:adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?)))) (is_on ?b ?x) (not (is_holding AG ?b)))
+         ) 
 )
-
+	 
+;;Model for Push
 (setq push
 	(make-op
-		:name ’push
-		:pars ’(?b ?x ?y ?h ?f)
-		:preconds ’((is_at ?b ?x)
+		:name 'push
+		:pars '(?b ?x ?y ?h ?f)
+		:preconds '((is_at ?b ?x)
 			(not (is_same ?x ?y))
 		         )
-		:effects ’((is_at ?b ?y)
+		:effects '((is_at ?b ?y)
 			(is_tired_to_degree AG (+ ?f 2))
 			(is_hungry_to_degree AG (+ ?h 1)))
-		:time-required ’(* 2 ?f)
-		:value ’(- 1 ?f)
+		:time-required '(* 2 ?f)
+		:value '(- 1 ?f)
 	)
 )
 
 (setq push.actual
-	(make-op
-		:name ’push.actual
-		:pars ’(?b ?x ?y)
-		:startconds ’((is_at ?b ?x)
+	(make-op.actual
+		:name 'push.actual
+		:pars '(?b ?x ?y)
+		:startconds '((is_at ?b ?x)
 			(not (is_same ?x ?y))
 		         )
-		:stopconds ’((is_tired_to_degree AG (> ?f 2))
+		:stopconds '((is_tired_to_degree AG (> ?f 2))
 			(is_hungry_to_degree AG (> ?h 2)))
 		:deletes '((is_tired_to_degree AG ?#1) 
                		(is_hungry_to_degree AG ?#2))
@@ -351,13 +382,13 @@
 				(navigable ?z)
                 (is_tired_to_degree AG ?f) 
                 (has_car AG ?c)
-                (has_gas ?c))
+                (has_gaslevel ?c))
     :effects '((is_at AG ?y) 
     		   (not (is_at AG ?x))
                ;(is_tired_to_degree AG (+ ?f 0.5))
                (is_tired_to_degree AG (+ ?f (* 0.1 (distance_from+to+on? ?x ?y ?z))));less tired than walking
                (not (is_tired_to_degree AG ?f)) 
-               (mileage_left (- ?m (distance_from+to+on? ?x ?y ?z))))
+               (has_mileagelevel (- ?m (distance_from+to+on? ?x ?y ?z))))
     :time-required '(/ (distance_from+to+on? ?x ?y ?z) 10) ;you take 1/10 of the time to drive
     :value '(- 0.5 ?f) ;less fatiguing than walking
     )
@@ -372,7 +403,7 @@
 				  (navigable ?z)
                   (is_tired_to_degree AG ?f) 
                   (has_car AG ?c)
-                  (has_gas ?c)
+                  (has_gaslevel ?c)
                  )
     :stopconds '((not (navigable ?z)) 
     			 (is_at AG ?y) )
@@ -383,7 +414,7 @@
     	    (is_on (the_pt+units_from+towards+on_road? (* 0.1 (elapsed_time?)) ?x ?y ?z) ?z)
     	    (is_on (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z) ?z)
     		(is_tired_to_degree AG (+ ?f (* 0.1 (elapsed_time?)))) 
-    		(mileage_left (- ?m (distance_from+to+on? ?x ?y ?z)))
+    		(has_mileagelevel (- ?m (distance_from+to+on? ?x ?y ?z)))
     		)
     )
 )
@@ -398,7 +429,7 @@
 (place-object 'gridworld_gas 'gas_station 'gas_station '(gas coke hot_dog) nil nil)
 
 ;;defining office
-(def-object 'office '(is_location is_inanimate (has_name office gridworld_tower) (has_level 2)))
+;(def-object 'office '(is_location is_inanimate (has_name office gridworld_tower) (has_level 2)))
 
 ;;defining supermarket
 (def-object 'supermarket '(is_location is_inanimate (has_name supermarket gridworld_market)))
@@ -412,12 +443,20 @@
 
 ;;----------------------------
 ;;Elana's Code
-(def-roadmap '(me-home boss-home office) '((path1 me-home 2 office) (path2 boss-home 3 office)))
+;(def-roadmap '(me-home boss-home office) '((path1 me-home 2 office) (path2 boss-home 3 office)))
 
+(defun answer_to_whq? (wff)
+	(check-whq-answer-in-kb 'NIL wff (state-node-wff-htable *curr-state-node*))
+)
 
 ;objects:
 
-(def-object 'person '(can_walk can_talk can_give can_take is_animate))
+;(def-object 'person '(can_talk is_animate))
+(def-object 'note '(is_readable))
+
+;objects:
+
+;(def-object 'person '(can_walk can_talk can_give can_take is_animate))
 
 (place-object 'ME 'person 'me-home 0  
     nil ;no associated things
@@ -437,38 +476,21 @@
 	 nil ;propositional attitudes?
 	 )
 
-(place-object 'Boss 'person 'boss-home 0
-	nil
-	'(
-	  ;self-knowledge
-	  (is_tired_to_degree Boss 0)
-	  (is_hungry_to_degree Boss 0)
-	  (has_money Boss 200)
-	  (has_age Boss 30)
-	  (has_name Boss Carol)
-	  (has_job Boss employer)
-	  (works_at Boss office)
-	  (is_single Boss)
-      ;other knowledge
-	  (has_name ME Alex)
-	  (has_job ME employee)
-	  (works_at ME office)
-	)
-	nil)
-
-
-;actions:
+(defun has_money? (?ag)
+	(let ((ans (answer_to_whq? (list 'has_money ?ag '?x))))
+		(if (equal (car ans) 'not) -1 (caddar ans))))
 
 (setq buy
 	  (make-op
 		:name 'buy
-		:pars '(?item ?store ?cost)
-		:preconds '((is_at AG ?store) 
-					(sells ?store ?item ?cost) ;need sells? check property?
-					(has_money AG ?cost))
-		:effects '((has_money AG (- (money? AG) ?cost) (owns AG ?item))) ;need owns, money?
-		:time-required '1
-		:value '0 ;value of item? idk
+		:pars '(?item ?cost)
+		:preconds '((is_at AG supermarket) 
+					(sells supermarket ?item ?cost)	
+					; ^ Add knows that ... and person to ask prices
+					(>= (has_money? AG) ?cost))
+		:effects '((has_money AG (- (has_money? AG) ?cost) (has AG ?item)))
+		:time-required 1
+		:value '?cost
 	  )
 )
 
@@ -477,24 +499,22 @@
 		:name 'buy.actual
 		:pars '(?item ?store ?cost)
 		:startconds '((is_at AG ?store) 
-					  (sells ?store ?item ?cost) ;need sells? check property?
-					  (has_money AG ?cost))
+					  (sells ?store ?item ?cost)
+					  (>= (has_money? AG) ?cost))
 		:stopconds nil
-		:deletes nil
-		:adds '((has_money AG (- (money? AG) ?cost)) (owns AG ?item))
-
-		;elapsed time?
+		:deletes '((has_money AG (has_money? AG)))
+		:adds '((has_money AG (- (has_money? AG) ?cost)) (has AG ?item))
 	  )
 )
 
 (setq smell 
 	  (make-op 
-		:name 'sleep
+		:name 'smell
 		:pars '(?item)
-		:preconds '((owns AG ?item) (is_food ?item))
-		:effects '((knows AG (whether (is_expired ?item))))
+		:preconds '((has AG ?item) (is_edible ?item))
+		:effects '((knows AG (whether (is_expired ?item)))) ;TODO: check this
 		:time-required '1
-		:value '(if (is_expired ?item) '1 '-1)
+		:value '(if (expired? ?item) 0.5 -0.5) ;TODO: expired?
 	  )
 )
 
@@ -502,48 +522,45 @@
 	  (make-op.actual
 		:name 'smell.actual
 		:pars '(?item)
-		:startconds '((owns AG ?item) (is_food ?item))
+		:startconds '((has AG ?item) (is_edible ?item))
 		:stopconds nil
 		:deletes nil
 		:adds '((knows AG (whether (is_expired ?item))))
 	  )
 )
 
+;might need to add case for no message found.
+(defun message_of? (n)
+	(caddar (answer_to_whq? (list 'has_message_that n '?message))))
+
 (setq read
 	  (make-op
 		:name 'read
 		:pars '(?item ?location)
-		:preconds '((is_at AG ?location) (is_at ?item ?location))
-		:effects '(knows AG (message_in ?item))
-		:time-required '(* 0.5 (length_of (message_in ?item)))
-		:value '0
+		:preconds '((is_at AG ?location) (is_at ?item ?location) (is_readable ?item))
+		:effects '(knows AG (message_of? ?item))
+		:time-required 3
+		:value 0
 	  )
 )
+
 
 (setq read.actual
 	  (make-op.actual
 		:name 'read.actual
 		:pars '(?item ?location)
-		:startconds '((is_at AG ?location) (is_at ?item ?location))
+		:startconds '((is_at AG ?location) (is_at ?item ?location) (is_readable ?item))
 		:stopconds '((there_is_a_fire))
 		:deletes nil
-		:adds '(knows AG (message_in ?item))
+		:adds '(knows AG (message_of? ?item))
 	  )
 )
 
-(setq say
-	  (make-op
-		:name 'say
-		:pars '(?message ?location)
-		:preconds (is_at AG ?location)
-		:effects '((said AG ?message ?location (current_time))) ;time?
-		:time-required '(*0.5 (length_of ?message))
-		:value '0
-	  )
-)
+;Example of a readable item
+(place-object 'note1 'note 'home 0 nil '((has_message_that note1 (wants Alice apple1))) nil)
 
 ;setup:
 
-(setq *operators* '(buy read smell say))
+(setq *operators* '(buy read smell))
 
 (setq *search-beam* (list (cons 1 *operators*)))
