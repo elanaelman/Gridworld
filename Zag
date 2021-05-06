@@ -25,7 +25,12 @@
 	(has_job AG employee)
 	(works_at AG office)
 	(is_single AG)
-	(has_name Boss Carol) (has_job Boss employer) (works_at Boss office)
+	  (is_at AG home)
+	  ;other knowledge
+	  (not(there_is_a_fire))
+	  (not(is_holding_something AG))
+	  (not(is_holding AG *))
+	;(has_name Boss Carol) (has_job Boss employer) (works_at Boss office)
 	)
 	nil
 )
@@ -71,7 +76,7 @@
 
 (place-object 'car1 'car 'home 0 
 	nil ; no associated-things
-	'((is_inanimate car1) (is_robots car1) (has_speed car1 0.0) (mileage_left car1 250)
+	'((is_inanimate car1) (is_robots car1) (has_gaslevel car1 100.0) (has_speed car1 0.0) (has_mileagelevel car1 250)
 	 )
     nil ; propositional attitudes
 )	
@@ -137,7 +142,7 @@
 		:name 'pick_up.actual
 		:pars '(?b ?x ?w ?h ?f)
 		:startconds '( (<= ?w 5)
-			(not (is_holding AG *))
+			(not (is_holding_something AG))
 			(is_tired_to_degree AG ?f)
                   	(<= ?f 1.5)
                   	(is_hungry_to_degree AG ?h)
