@@ -1,7 +1,7 @@
 ; Elana's gridworld functions.
 
 ;temporary map:
-(def-roadmap '(home office) '((p1 home 1 office))) 
+(def-roadmap '(home office supermarket) '((p1 home 1 office) (p2 home 1 supermarket))) 
 
 ;temporary function, included in skeleton:
 
@@ -13,9 +13,13 @@
 
 ;(def-object 'person '(can_talk is_animate))
 (def-object 'note '(is_readable))
+(def-object 'apple  '(is_food))
+
+(place-object 'apple1 'apple 'home 0 nil nil nil)
+(place-object 'apple2 'apple 'home 0 nil nil nil)
 
 (place-object 'AG 'person 'home 0  
-    nil ;no associated things
+    '((apple apple2)) ;associated things
 	'(
 	  ;self-knowledge
 	  (is_tired_to_degree AG 0)
@@ -40,7 +44,6 @@
 	  
 	  
 	  
-
 	  ;depends on Boss object:
 	  ;(has_name Boss Carol) (has_job Boss employer) (works_at Boss office)
 	 )
@@ -73,15 +76,52 @@
 	(let ((ans (answer_to_whq? (list 'has_money ?ag '?x))))
 		(if (equal (car ans) 'not) -1 (caddar ans))))
 
+(setq test
+	  (make-op
+		:name 'test
+		:pars '(?item ?cost)
+		:preconds '((is_at AG home) 
+					(sells home ?item ?cost ?current_money)	
+					; TODO: ^ Add knows that ... and person to ask prices
+					(has_money AG ?current_money)
+					(>= 100 ?cost)
+					;(not (has AG ?item))
+					)
+		:effects '((has_money AG (- 100 ?cost) (has AG ?item))
+				   (not (sells home ?item ?cost)))
+		:time-required 1
+		:value 1000
+	  )
+)
+
+(setq test.actual
+	  (make-op.actual
+		:name 'test.actual
+		:pars '(?item ?cost ?current_money)
+		:startconds '((is_at AG home)
+					  (has_money AG 100)
+					  (sells home ?item ?cost)
+					  (>= 100 ?cost)
+					  ;(not (has AG ?item))
+					  )
+		:stopconds '((has AG ?item))
+		:deletes '((has_money AG 100) (sells home ?item ?cost))
+		:adds '((has_money AG (- 100 ?cost)) (has AG ?item))
+	  )
+)
+
 (setq buy
 	  (make-op
 		:name 'buy
-		:pars '(?item ?cost)
+		:pars '(?item ?cost ?current_money)
 		:preconds '((is_at AG supermarket) 
 					(sells supermarket ?item ?cost)	
-					; ^ Add knows that ... and person to ask prices
-					(>= (has_money? AG) ?cost))
-		:effects '((has_money AG (- (has_money? AG) ?cost) (has AG ?item)))
+					; TODO: ^ Add knows that ... and person to ask prices
+					(has_money AG ?current_money)
+					(>= ?current_money ?cost)
+					(not (has AG ?item)))
+		:effects '((has_money AG (- ?current_money ?cost) (has AG ?item))
+				   (not (sells supermarket ?item ?cost)))
 		:time-required 1
 		:value '?cost
 	  )
@@ -90,13 +130,15 @@
 (setq buy.actual
 	  (make-op.actual
 		:name 'buy.actual
-		:pars '(?item ?store ?cost)
-		:startconds '((is_at AG ?store) 
-					  (sells ?store ?item ?cost)
-					  (>= (has_money? AG) ?cost))
-		:stopconds nil
-		:deletes '((has_money AG (has_money? AG)))
-		:adds '((has_money AG (- (has_money? AG) ?cost)) (has AG ?item))
+		:pars '(?item ?cost ?current_money)
+		:startconds '((is_at AG supermarket)
+					  (has_money AG ?current_money)
+					  (sells supermarket ?item ?cost)
+					  (>= ?current_money ?cost)
+					  (not (has AG ?item)))
+		:stopconds '((has AG ?item))
+		:deletes '((has_money AG ?current_money) (sells supermarket ?item ?cost))
+		:adds '((has_money AG (- ?current_money ?cost)) (has AG ?item))
 	  )
 )
 
@@ -107,7 +149,7 @@
 		:preconds '((has AG ?item) (is_edible ?item))
 		:effects '((knows AG (whether (is_expired ?item)))) ;TODO: check this
 		:time-required '1
-		:value '(if (expired? ?item) 0.5 -0.5) ;TODO: expired?
+		:value 1 ;TODO: expired?
 	  )
 )
 
@@ -116,11 +158,13 @@
 		:name 'smell.actual
 		:pars '(?item)
 		:startconds '((has AG ?item) (is_edible ?item))
-		:stopconds nil
+		:stopconds '((knows AG (whether (is_expired ?item))))
 		:deletes nil
 		:adds '((knows AG (whether (is_expired ?item))))
 	  )
 )
+
+
 
 ;might need to add case for no message found.
 (defun message_of? (n)
@@ -131,9 +175,9 @@
 		:name 'read
 		:pars '(?item ?location)
 		:preconds '((is_at AG ?location) (is_at ?item ?location) (is_readable ?item))
-		:effects '(knows AG (message_of? ?item))
+		:effects '((knows AG (message_of? ?item)))
 		:time-required 3
-		:value 0
+		:value 3
 	  )
 )
 
@@ -143,14 +187,14 @@
 		:name 'read.actual
 		:pars '(?item ?location)
 		:startconds '((is_at AG ?location) (is_at ?item ?location) (is_readable ?item))
-		:stopconds '((there_is_a_fire))
+		:stopconds '((there_is_a_fire) (knows AG (message_of? ?item)))
 		:deletes nil
-		:adds '(knows AG (message_of? ?item))
+		:adds '((knows AG (message_of? ?item)))
 	  )
 )
 
 ;Example of a readable item
-(place-object 'note1 'note 'home 0 nil '((has_message_that note1 (wants Alice apple1))) nil)
+(place-object 'note1 'note 'home 0 nil '((has_message_that note1 (is_single AG))) nil)
 
 
 ; say operators are currently broken, and also not useful without a second agent
@@ -182,7 +226,7 @@
 
 ;setup:
 
-(setq *operators* '(buy read smell))
+(setq *operators* '(buy smell read test))
 
 (setq *search-beam* (list (cons 1 *operators*)))
 
