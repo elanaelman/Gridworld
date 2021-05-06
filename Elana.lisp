@@ -31,6 +31,12 @@
 	  (not(there_is_a_fire))
 	  (not(is_holding_something AG))
 	  (not(is_holding AG *))
+	  (not (there_is_a_flood))
+	  (is_thirsty_to degree AG 0)
+	  (has_car AG car1)
+	  (has_gaslevel AG car1 100.0)
+	  (has_speed AG car1 0)
+	  (has_mileagelevel AG car1 250)
 	  
 	  
 	  
