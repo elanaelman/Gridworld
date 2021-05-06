@@ -1,17 +1,7 @@
 ; Elana's gridworld functions.
 
-;temporary map:
-(def-roadmap '(home office supermarket) '((p1 home 1 office) (p2 home 1 supermarket))) 
-
-;temporary function, included in skeleton:
-
-(defun answer_to_whq? (wff)
-	(check-whq-answer-in-kb 'NIL wff (state-node-wff-htable *curr-state-node*))
-)
-
 ;objects:
-
-;(def-object 'person '(can_talk is_animate))
+(def-object 'person '(can_talk is_animate))
 (def-object 'note '(is_readable))
 (def-object 'apple  '(is_food))
 
@@ -19,7 +9,7 @@
 (place-object 'apple2 'apple 'home 0 nil nil nil)
 
 (place-object 'AG 'person 'home 0  
-    '((apple apple2)) ;associated things
+	nil
 	'(
 	  ;self-knowledge
 	  (is_tired_to_degree AG 0)
@@ -75,40 +65,6 @@
 (defun has_money? (?ag)
 	(let ((ans (answer_to_whq? (list 'has_money ?ag '?x))))
 		(if (equal (car ans) 'not) -1 (caddar ans))))
-
-(setq test
-	  (make-op
-		:name 'test
-		:pars '(?item ?cost)
-		:preconds '((is_at AG home) 
-					(sells home ?item ?cost ?current_money)	
-					; TODO: ^ Add knows that ... and person to ask prices
-					(has_money AG ?current_money)
-					(>= 100 ?cost)
-					;(not (has AG ?item))
-					)
-		:effects '((has_money AG (- 100 ?cost) (has AG ?item))
-				   (not (sells home ?item ?cost)))
-		:time-required 1
-		:value 1000
-	  )
-)
-
-(setq test.actual
-	  (make-op.actual
-		:name 'test.actual
-		:pars '(?item ?cost ?current_money)
-		:startconds '((is_at AG home)
-					  (has_money AG 100)
-					  (sells home ?item ?cost)
-					  (>= 100 ?cost)
-					  ;(not (has AG ?item))
-					  )
-		:stopconds '((has AG ?item))
-		:deletes '((has_money AG 100) (sells home ?item ?cost))
-		:adds '((has_money AG (- 100 ?cost)) (has AG ?item))
-	  )
-)
 
 (setq buy
 	  (make-op
@@ -220,14 +176,5 @@
 ;		  :adds '((said AG ?message ?location (current_time?)))
 ;		)
 ;)
-
-
-
-
-;setup:
-
-(setq *operators* '(buy smell read test))
-
-(setq *search-beam* (list (cons 1 *operators*)))
 
 
