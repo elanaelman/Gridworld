@@ -1,4 +1,9 @@
-;;Zag's code
+;temporary; for debugging
+(defun answer (wff)
+	(check-whq-answer-in-kb 'NIL wff (state-node-wff-htable *curr-state-node*)))
+
+
+;Zag's code
 (def-object 'robot '(is_animate can_talk))
 (def-object 'office '(is_inanimate))
 (def-object 'gas '(is_inanimate is_notedible can_finish (has_cost 2.0)))
@@ -17,8 +22,8 @@
 (place-object 'AG 'person 'home 0
 	nil
 	'(
-	(is_tired_to_degree AG 0)
-	(is_hungry_to_degree AG 0)
+	(is_tired_to_degree AG 4)
+	(is_hungry_to_degree AG 2)
 	(has_money AG 100)
 	(has_age AG 25)
 	(has_name AG Alex)
@@ -94,15 +99,14 @@
 		:pars '(?f ?h)
 		:preconds '( (is_at AG home)
 			(is_tired_to_degree AG ?f)
-			(>= ?f 0.5)
+			(>= ?f 2.5) ;0.5
 			(is_hungry_to_degree AG ?h)
-			(> ?f ?h)
-			(not (there_is_a_fire)) )
-		:effects '( (is_tired_to_degree AG 0)
+			(> ?f ?h))
+		:effects '( (is_tired_to_degree AG 0.0) ;0
 			(not (is_tired_to_degree AG ?f))
-			(is_hungry_to_degree AG (+ ?h 2)))
+			(is_hungry_to_degree AG (+ ?h (* 0.5 ?f)))) ;(+ ?h (* 2 ?f))
 		:time-required '(* 4 ?f)
-		:value '(* 2 ?f)
+		:value '(* 1 ?f) ;*2f
 	)
 )
 
