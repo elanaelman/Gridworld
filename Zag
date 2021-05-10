@@ -39,7 +39,6 @@
 	  (is_thirsty_to degree AG 0)
 	  (has_car AG car1)
 	  (has_gaslevel AG car1 100.0)
-	  (has_speed AG car1 0)
 	  (has_mileagelevel AG car1 250)
 	;(has_name Boss Carol) (has_job Boss employer) (works_at Boss office)
 	)

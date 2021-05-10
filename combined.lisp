@@ -35,7 +35,6 @@
 (place-object 'chicken1 'chicken 'home 0 nil '((not (is_expired chicken1))) nil)
 (place-object 'chicken2 'chicken 'home 0 nil '((is_expired chicken2)) nil)
 (place-object 'water1 'water 'home 0 nil nil nil)
-;(place-object 'gridworld_supermarket 'supermarket 'supermarket 0 '((chicken chicken1)) nil nil)
 
 ;; agent
 (place-object 'AG 'person 'home 0
@@ -61,16 +60,12 @@
 	  (has_gaslevel AG car1 100.0)
 	  (has_speed AG car1 0)
 	  (has_mileagelevel AG car1 250)
-	  (knows AG (whether (is_edible chicken1)))
 	  (knows AG (whether (is_potable water1)))
-	;(has_name Boss Carol) (has_job Boss employer) (works_at Boss office)
 	)
 	nil
 )
 
-;;----------------------------------------
-;;George's code
-;;model version of eat
+;model eat
 (setq eat 
 	(make-op :name 'eat :pars '(?h ?x ?y) ; level of hunger ?h
 	:preconds '( (is_hungry_to_degree AG ?h) 
@@ -155,7 +150,6 @@
                 (is_tired_to_degree AG ?f) )
     :effects '((is_at AG ?y) 
     		   (not (is_at AG ?x))
-               ;(is_tired_to_degree AG (+ ?f 0.5))
                (is_tired_to_degree AG (+ ?f (* 0.5 (distance_from+to+on? ?x ?y ?z))))  
                (not (is_tired_to_degree AG ?f)) )
     :time-required '(distance_from+to+on? ?x ?y ?z)
@@ -243,8 +237,7 @@
 )
 
 
-
-;might need to add case for no message found.
+;helper function for read
 (defun message_of? (n)
 	(caddar (answer_to_whq? (list 'has_message_that n '?message))))
 
